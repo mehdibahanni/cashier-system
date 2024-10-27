@@ -1,9 +1,9 @@
 <?php
 session_start();
-require_once '../connect.php'; // تأكد من أن لديك ملف اتصال بالقاعدة البيانات
+require_once '../connect.php';
 
 if (isset($_SESSION['admin_logged_in'])) {
-    header('Location: dashboard.php');
+    header('Location: ./dashboard.php');
     exit;
 }
 
@@ -11,20 +11,33 @@ if (isset($_POST['login'])) {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    // استعلام للتحقق من بيانات الاعتماد
-
-    $result = mysqli_query($conn, "SELECT * FROM admins WHERE email='$email' AND password='$password'");
-    
-    if (mysqli_num_rows($result) > 0) {
-        $_SESSION['admin_logged_in'] = true; // تعيين جلسة المستخدم كمدير
-        header('Location: ./dashboard.php'); // إعادة التوجيه إلى لوحة التحكم
-        exit;
+    if (!empty($email) && !empty($password)) {
+        $stmt = $conn->prepare("SELECT password FROM admins WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            if (password_verify($password, $row['password']) || $password === $row['password']) {
+                echo  "hallow";
+                $_SESSION['admin_logged_in'] = true;
+                header('Location: ./dashboard.php');
+                exit;
+            } else {
+                $error_message = "اسم المستخدم أو كلمة المرور غير صحيحة.";
+            }
+        } else {
+            $error_message = "اسم المستخدم أو كلمة المرور غير صحيحة.";
+        }
+        $stmt->close();
     } else {
-        $error_message = "اسم المستخدم أو كلمة المرور غير صحيحة.";
+        $error_message = "الرجاء ملء جميع الحقول.";
     }
 }
+mysqli_close($conn);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="ar">

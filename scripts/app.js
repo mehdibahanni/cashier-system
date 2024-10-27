@@ -1,4 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // check employees status 
+    setInterval(function() {
+        
+        $.ajax({
+            url: './check_employee_status.php',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {                
+                if (response.status === 'close') {                    
+                    window.location.href = './closed_account.php';
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("Error occurred: ", error);
+            }
+        });
+    }, 5000);
+
+    // get varibles
     const menuItems = document.querySelectorAll('.add-to-cart');
     const orderList = document.getElementById('order-list');
     const totalPriceEl = document.getElementById('total-price');
@@ -92,6 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(error => {
             console.error('حدث خطأ أثناء الطلب: ', error);
-        });    
+        });
     });        
 });

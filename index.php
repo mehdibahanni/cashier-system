@@ -2,56 +2,57 @@
 session_start();
 require_once './connect.php';
 
+if (isset($_SESSION['employe_logged_in']) || isset($_SESSION['admin_logged_in'])) {
+    header('Location: ./home.php');
+    exit;
+}
+
 if (isset($_POST['login'])) {
     $username = $_POST['username'];
-    $password = $_POST['password'];
 
-
-    $check_status = "SELECT account_status FROM employees WHERE username='$username'";
-
-    $status = $conn->query($check_status);
-    $em_status = $status->fetch_assoc();
+    $result = mysqli_query($conn, "SELECT * FROM employees WHERE username='$username'");
     
-    if ($em_status['account_status'] == 'closed') {
-        header('Location: ./closed_account.php');
-        exit();
-    } else {
-        $stmt = $conn->prepare("SELECT id, password FROM employees WHERE username=?");
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
-    
-        if ($result->num_rows > 0) {
-            $user = $result->fetch_assoc();
+    if (mysqli_num_rows($result) > 0) {
+        $row = mysqli_fetch_assoc($result);
+        if($row['account_status'] === 'close'){
+            header('Location: ./closed_account.php');
+        }else{
+            $id = $row['id'];
+            $name = $row['username'];
+            // echo 
+            // "<script>
+            //     localStorage.setItem('employe_id', '$id');
+            //     localStorage.setItem('employe_name', '$name');
+            // </script>";
             
-            if ($password === $user['password']) {
-                $_SESSION['employe_id'] = $user['id']; 
-                $_SESSION['employe_logged_in'] = true;
-                header('Location: ./home.php');
-                exit;
-            } else {
-                $error_message = "اسم المستخدم أو كلمة المرور غير صحيحة.";
-            }
-        } else {
-            $error_message = "اسم المستخدم أو كلمة المرور غير صحيحة.";
+            $_SESSION['employe_logged_in'] = true; 
+            $_SESSION['employe_id'] = $id; 
+            header('Location: ./home.php'); 
+            exit();
         }
+        exit;
+    } else {
+        $error_message = "اسم المستخدم أو كلمة المرور غير صحيحة.";
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <title>تسجيل الدخول</title>
-    <style>
-        body{
-            direction: rtl;
-            text-align: right;
-        }
-    </style>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<style>
+    body {
+    direction: rtl;
+    text-align: right; 
+    }
+
+.container {
+    text-align: right; 
+}
+</style>
 </head>
 <body>
     <div class="container">
@@ -66,12 +67,14 @@ if (isset($_POST['login'])) {
                 <label for="username">اسم المستخدم:</label>
                 <input type="text" class="form-control" id="username" name="username" required>
             </div>
-            <div class="form-group">
-                <label for="password">كلمة المرور:</label>
-                <input type="password" class="form-control" id="password" name="password" required>
-            </div>
             <button type="submit" name="login" class="btn btn-primary btn-block">تسجيل الدخول</button>
         </form>
     </div>
+    <script>
+        document.querySelector('button').addEventListener('click', ()=>{
+        const employeID = document.querySelector('#username').value
+        localStorage.setItem('employe_name', employeID);
+        })
+    </script>
 </body>
 </html>

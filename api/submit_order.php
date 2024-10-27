@@ -58,5 +58,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // إغلاق الاتصال بقاعدة البيانات
 mysqli_close($conn);
-
-?>

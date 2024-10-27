@@ -1,15 +1,14 @@
-<?php
-
+<?php 
 require('./connect.php');
+require('./asset/fpdf.php'); // تأكد من استيراد مكتبة FPDF بشكل صحيح
 
 $order = file_get_contents("php://input", true);
 $data = json_decode($order, true);
 
-if($_SERVER['REQUEST_METHOD'] === 'POST'){
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $conn->prepare("INSERT INTO orders (employee_id, product_id, product_name, quantity, total_price) VALUES (?, ?, ?, ?, ?)");
-
-    foreach($data as $item){
+    foreach ($data as $item) {
         $id = $item['id'];
         $name = $item['name'];
         $quantity = $item['quantity'];
@@ -17,60 +16,59 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         $employee_id = 1;
 
         $stmt->bind_param("iissd", $employee_id, $id, $name, $quantity, $cost);
-        
+
         if (!$stmt->execute()) {
             echo json_encode(['success' => false, 'message' => 'فشل إدخال الطلب']);
             exit;
         }
     }
 
-// تجهيز الإيصال
-$receipt = "--------------------------------------\n";
-$receipt .= "         رحيه   \n";
-$receipt .= "--------------------------------------\n";
-$receipt .= "رقم الطلب: " . rand(1000, 9999) . "\n";
-$receipt .= "الوقت: " . date('Y-m-d H:i:s') . "\n\n";
-$receipt .= "الطلبات:\n";
+    $pdf = new FPDF();
+    $pdf->AddPage();
+    $pdf->SetFont('Arial', 'B', 16);
+    $pdf->Cell(40, 10, 'إيصال الطلب');
+    $pdf->Ln(20);
+    $pdf->SetFont('Arial', '', 12);
+    $pdf->Cell(40, 10, 'رقم الطلب: ' . rand(1000, 9999));
+    $pdf->Ln(10);
+    $pdf->Cell(40, 10, 'الوقت: ' . date('Y-m-d H:i:s'));
+    $pdf->Ln(10);
+    $pdf->Cell(40, 10, '--------------------------------------');
+    $pdf->Ln(10);
+    $pdf->Cell(40, 10, 'الطلبات:');
+    $pdf->Ln(10);
 
-// إضافة الطلبات
-foreach ($data as $index => $order) { 
-    $sql = "SELECT price FROM products WHERE id = ?";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $order['id']);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    
-    $priceData = mysqli_fetch_assoc($result);
-    $price = $priceData['price']; // سعر المنتج
+    foreach ($data as $index => $order) {
+        $sql = "SELECT price FROM products WHERE id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $order['id']);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
 
-    $totalPrice = $order['quantity'] * $price;
-    $receipt .= ($index + 1) . ". " . $order['name'] . "    " . $order['quantity'] . " × " . number_format($price, 2) . " دينار كويتي = " . number_format($totalPrice, 2) . " دينار كويتي\n";
-}
-$receipt .= "--------------------------------------\n";
-$receipt .= "الإجمالي: " . $order['cost'] . " دينار\n";
-$receipt .= "--------------------------------------\n";
-$receipt .= "حياكم الله، شكراً لتعاملكم معانا!\n";
-$receipt .= "--------------------------------------\n";
+        $priceData = mysqli_fetch_assoc($result);
+        $price = $priceData['price'];
 
-// إرسال إلى الطابعة أو تخزين الإيصال
-file_put_contents('receipts.txt', $receipt, FILE_APPEND);
+        $totalPrice = $order['quantity'] * $price;
+        $pdf->Cell(40, 10, ($index + 1) . ". " . $order['name'] . " - " . $order['quantity'] . " × " . number_format($price, 2) . " دينار كويتي = " . number_format($totalPrice, 2) . " دينار كويتي");
+        $pdf->Ln(10);
+    }
 
-//     $cashier_ip = '192.168.1.50';
-//     $url = "http://$cashier_ip/receive_invoice.php";
+    $pdf->Cell(40, 10, "الإجمالي: " . number_format($cost, 2) . " دينار");
+    $pdf->Ln(10);
+    $pdf->Cell(40, 10, '--------------------------------------');
+    $pdf->Ln(10);
+    $pdf->Cell(40, 10, 'شكراً لتعاملكم معنا!');
+    $pdf->Ln(10);
 
-//     // إرسال البيانات باستخدام POST
-//     $data = ['receipt' => $receipt];
-//     $ch = curl_init($url);
-//     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-//     $response = curl_exec($ch);
-//     curl_close($ch);
+    $filePath = '/pdf/receipt_.pdf';
+    $pdf->Output('F', $filePath);
 
+    echo json_encode(['success' => true, 'message' => 'تم إرسال الفاتورة إلى جهاز الطابعة']);
+    echo json_encode(['success' => true, 'pdf_url' => 'http://yourserver.com/' . $filePath]);
 
-//     echo "تم إرسال الفاتورة إلى الكاشير.";
+    header('Location: check_ip.php?file=' . urlencode($filePath));
+    exit();
 
-    $stmt->close();    
-    echo json_encode(['success' => true]);
-}else{
+} else {
     echo json_encode(['success' => false, 'message' => 'لا توجد طلبات']);
 }

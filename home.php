@@ -3,31 +3,32 @@ require './connect.php';
 session_start();
 
 if (!isset($_SESSION['employe_logged_in'])) {
-    header('Location: ./index.php');
-    exit;
-}
-
-$id = $_SESSION['employe_id']; 
-$check_status = "SELECT account_status FROM employees WHERE id='$id'";
-
-$status = $conn->query($check_status);
-$em_status = $status->fetch_assoc();
-
-if ($em_status['account_status'] == 'closed') {
-    header('Location: ./closed_account.php');
-    exit();
-}else{
-    $sql = "SELECT * FROM products";
-    $result = $conn->query($sql);
-    $products = [];
+    if (!isset($_SESSION['admin_logged_in'])) {
+        header('Location: ./index.php');
+        exit;
+    }
+} else {
+    $id = $_SESSION['employe_id']; 
+    $check_status = "SELECT account_status FROM employees WHERE id='$id'";
     
-    if ($result->num_rows > 0) {
-        while($row = $result->fetch_assoc()) {
-            $products[] = $row;
-        }
+    $status = $conn->query($check_status);
+    $em_status = $status->fetch_assoc();
+
+    if ($em_status['account_status'] == 'close') {
+        session_destroy();
+        header('Location: ./closed_account.php');
+        exit();
     }
 }
+$sql = "SELECT * FROM products";
+$result = $conn->query($sql);
+$products = [];
 
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+        $products[] = $row;
+    }
+}
 
 $conn->close();
 ?>
@@ -38,17 +39,62 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام الكاشير</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="./styles/styles.css">
-    <style>
-        body{
-            direction: rtl;
-            text-align: right;
-        }
-        body > div.container{
-            text-align: center;
-        }
-    </style>
 </head>
+<style>
+    body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    direction: rtl;
+    text-align: right;
+}
+body > div.container{
+    text-align: center;
+}
+/* navbar styles */
+.nav-link {
+    color: black;
+    transition: color 0.4s ease;
+}
+.nav-link.active {
+    color: #ff6347 !important;
+    font-size: 1.2rem;
+    font-weight: bold;
+
+}
+.nav-link:hover {
+    color: #007bff;
+}
+
+.menu-section ul, .order-section ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.menu-section li {
+    padding: 10px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.meal-img {
+    width: 50px;
+    height: auto;
+    margin-left: 10px;
+}
+
+.order-section li {
+    padding: 5px;
+    margin: 5px;
+}
+
+button {
+    padding: 10px 20px;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+</style>
 <body>
     <!-- alert section -->
     <div class="alert alert-success alert-dismissible fade d-none" role="alert" id="order-alert">
@@ -66,25 +112,27 @@ $conn->close();
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto"> 
-                <li class="nav-item">
-                    <a class="nav-link" href="./home.php">الرئيسية</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="./admin/dashboard.php">لوحة التحكم</a>
-                </li>
-                <li>
-                    <a class="nav-link" href="./admin/manage_products.php">إدارة المنتجات</a>
-                </li>
-                    <a class="nav-link" href="./admin/manage_employees.php">إدارة الموظفين</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="./admin/logout.php">تسجيل الخروج</a>
-                </li>
-            </ul>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="./home.php">الرئيسية</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./admin/dashboard.php">لوحة التحكم</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href=./admin/manage_products.php">إدارة المنتجات</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href=./admin/manage_employees.php">إدارة الموظفين</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./admin/logout.php">تسجيل الخروج</a>
+                    </li>
+                </ul>
             </div>
         </div>
-    </nav>';}?>
+    </nav>
+    ';}?>
 
     <!-- products -->
     <div class="container">
@@ -97,7 +145,7 @@ $conn->close();
                         <div class="card-body">
                             <h5 class="card-title"><?= $product['name'] ?></h5>
                             <p class="card-text"><?= $product['description'] ?></p>
-                            <p class="card-text"><strong><?= $product['price'] ?> درهم</strong></p>
+                            <p class="card-text"><strong><?= $product['price'] ?> دينار</strong></p>
                             <button class="btn btn-primary add-to-cart" data-id="<?= $product['id'] ?>" data-name="<?= $product['name'] ?>" data-price="<?= $product['price'] ?>">إضافة إلى السلة</button>
                         </div>
                     </div>
@@ -136,6 +184,7 @@ $conn->close();
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="./scripts/app.js"></script>

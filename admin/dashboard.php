@@ -43,93 +43,136 @@ body {
 
     <!-- content and analysis -->
     <div class="container mt-5">
-        <h1 class="text-center">لوحة تحكم</h1>
-        
-        <!-- قسم الإحصائيات -->
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="stat-item">
-                    <h2>إجمالي المبيعات لليوم</h2>
-                    <p>
-                        <?php
-                        require('../connect.php');
-                        // استعلام لجلب إجمالي المبيعات لليوم
-                        $today = date('Y-m-d');
-                        $sql = "SELECT SUM(total_price) AS total_today FROM orders WHERE DATE(order_time) = '$today'";
-                        $result = $conn->query($sql);
-                        $row = $result->fetch_assoc();
-                        echo "$" . number_format($row['total_today'], 2);
-                        ?>
-                    </p>
-                </div>
+    <h1 class="text-center">لوحة تحكم</h1>
+    
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="stat-item">
+                <h2>إجمالي المبيعات لليوم</h2>
+                <p>
+                    <?php
+                    require('../connect.php');
+                    // استعلام لجلب إجمالي المبيعات لليوم
+                    $today = date('Y-m-d');
+                    $sql = "SELECT SUM(total_price) AS total_today FROM orders WHERE DATE(order_time) = '$today'";
+                    $result = $conn->query($sql);
+                    $row = $result->fetch_assoc();
+                    echo "$" . number_format($row['total_today'], 2);
+                    ?>
+                </p>
             </div>
-            <div class="col-md-4">
-                <div class="stat-item">
-                    <h2>إجمالي المبيعات للأسبوع</h2>
-                    <p>
-                        <?php
-                        // استعلام لجلب إجمالي المبيعات للأسبوع
-                        $sql = "SELECT SUM(total_price) AS total_week FROM orders WHERE WEEK(order_time) = WEEK(NOW())";
-                        $result = $conn->query($sql);
-                        $row = $result->fetch_assoc();
-                        echo "$" . number_format($row['total_week'], 2);
-                        ?>
-                    </p>
-                </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-item">
+                <h2>إجمالي المبيعات للأسبوع</h2>
+                <p>
+                    <?php
+                    // استعلام لجلب إجمالي المبيعات للأسبوع
+                    $sql = "SELECT SUM(total_price) AS total_week FROM orders WHERE WEEK(order_time) = WEEK(NOW())";
+                    $result = $conn->query($sql);
+                    $row = $result->fetch_assoc();
+                    echo "$" . number_format($row['total_week'], 2);
+                    ?>
+                </p>
             </div>
-            <div class="col-md-4">
-                <div class="stat-item">
-                    <h2>إجمالي المبيعات للشهر</h2>
-                    <p>
-                        <?php
-                        // استعلام لجلب إجمالي المبيعات للشهر
-                        $sql = "SELECT SUM(total_price) AS total_month FROM orders WHERE MONTH(order_time) = MONTH(NOW()) AND YEAR(order_time) = YEAR(NOW())";
-                        $result = $conn->query($sql);
-                        $row = $result->fetch_assoc();
-                        echo "$" . number_format($row['total_month'], 2);
-                        ?>
-                    </p>
-                </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-item">
+                <h2>إجمالي المبيعات للشهر</h2>
+                <p>
+                    <?php
+                    // استعلام لجلب إجمالي المبيعات للشهر
+                    $sql = "SELECT SUM(total_price) AS total_month FROM orders WHERE MONTH(order_time) = MONTH(NOW()) AND YEAR(order_time) = YEAR(NOW())";
+                    $result = $conn->query($sql);
+                    $row = $result->fetch_assoc();
+                    echo "$" . number_format($row['total_month'], 2);
+                    ?>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="stat-item">
+                <h2>عدد العملاء</h2>
+                <p>
+                    <?php
+                    // استعلام لجلب عدد العملاء الفريدين
+                    $sql = "SELECT COUNT(DISTINCT employee_id) AS total_clients FROM orders";
+                    $result = $conn->query($sql);
+                    $row = $result->fetch_assoc();
+                    echo $row['total_clients'];
+                    ?>
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="stat-item">
+                <h2>عدد الطلبات</h2>
+                <p>
+                    <?php
+                    // استعلام لجلب عدد الطلبات
+                    $sql = "SELECT COUNT(*) AS total_orders FROM orders";
+                    $result = $conn->query($sql);
+                    $row = $result->fetch_assoc();
+                    echo $row['total_orders'];
+                    ?>
+                </p>
             </div>
         </div>
 
-        <!-- قسم الإحصائيات للعملاء والطلبات -->
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="stat-item">
-                    <h2>عدد العملاء</h2>
-                    <p>
+        <div class="col-md-12 mt-4">
+            <div class="stat-item">
+                <h2>ملخص مبيعات الموظفين لليوم</h2>
+                <table class="table table-bordered table-striped">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>رقم الموظف</th>
+                            <th>اسم الموظف</th>
+                            <th>إجمالي المبيعات (MAD)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         <?php
-                // استعلام لجلب عدد العملاء الفريدين
-                $sql = "SELECT COUNT(DISTINCT employee_id) AS total_clients FROM orders GROUP BY DATE_FORMAT(order_time, '%Y-%m-%d %H:%i')";
-                $result = $conn->query($sql);
-                $total_clients = 0;
+                        // دالة لحساب مبيعات كل موظف في نهاية اليوم
+                        function closeEmployeeAccounts() {
+                            global $conn;
 
-                if ($result) {
-                    while ($row = $result->fetch_assoc()) {
-                        $total_clients++;
-                    }
-                }
-                echo $total_clients;
-                ?>
-                    </p>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="stat-item">
-                    <h2>عدد الطلبات</h2>
-                    <p>
-                        <?php
-                        // استعلام لجلب عدد الطلبات
-                        $sql = "SELECT COUNT(*) AS total_orders FROM orders";
-                        $result = $conn->query($sql);
-                        $row = $result->fetch_assoc();
-                        echo $row['total_orders'];
+                            // استعلام لجلب مجموع المبيعات لكل موظف بناءً على الطلبات
+                            $query = "
+                                SELECT e.id, e.username, SUM(o.total_price) AS total_sales
+                                FROM employees e
+                                LEFT JOIN orders o ON e.id = o.employee_id
+                                WHERE DATE(o.order_time) = CURDATE()  -- طلبات اليوم فقط
+                                GROUP BY e.id, e.username
+                            ";
+
+                            // تنفيذ الاستعلام
+                            $result = mysqli_query($conn, $query);
+
+                            if ($result) {
+                                while ($row = mysqli_fetch_assoc($result)) {
+                                    echo '<tr>';
+                                    echo '<td>' . $row['id'] . '</td>';
+                                    echo '<td>' . $row['username'] . '</td>';
+                                    echo '<td>' . number_format($row['total_sales'], 2) . ' MAD</td>';
+                                    echo '</tr>';
+                                }
+                            } else {
+                                echo '<tr><td colspan="3" class="text-danger">خطأ: ' . mysqli_error($conn) . '</td></tr>';
+                            }
+                        }
+
+                        // استدعاء دالة إغلاق الحسابات وحساب المبيعات
+                        closeEmployeeAccounts();
                         ?>
-                    </p>
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
+
 
         <!-- جدول الطلبات -->
         <h2 class="mt-5">الطلبات</h2>
@@ -164,7 +207,6 @@ body {
                     echo "<tr><td colspan='5'>لا توجد طلبات.</td></tr>";
                 }
 
-                // إغلاق الاتصال
                 $conn->close();
                 ?>
             </tbody>

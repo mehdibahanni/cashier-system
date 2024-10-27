@@ -16,17 +16,6 @@ CREATE TABLE employees (
     account_status ENUM('open', 'closed') DEFAULT 'open'
 );
 
-CREATE TABLE orders (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    employee_id INT,
-    order_item_id INT,
-    product_name VARCHAR(255)
-    quantity INT,
-    total_price DECIMAL(10, 2),
-    order_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (employee_id) REFERENCES employees(id),
-    FOREIGN KEY (order_item_id) REFERENCES products(id)
-);
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,       
     name VARCHAR(255) NOT NULL,              
@@ -36,6 +25,25 @@ CREATE TABLE products (
     image VARCHAR(255),                      
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
 );
+CREATE TABLE orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT,
+    order_item_id INT,
+    product_name VARCHAR(255),
+    quantity INT,
+    total_price DECIMAL(10, 2),
+    order_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employees(id),
+    FOREIGN KEY (order_item_id) REFERENCES products(id)
+);
+
+CREATE USER 'cashier_system_owner'@'localhost' IDENTIFIED BY 'cashier_system_owner@2024';
+GRANT ALL PRIVILEGES ON cashier_system.* TO 'cashier_system_owner'@'localhost';
+FLUSH PRIVILEGES;
+
+ALTER USER 'cashier_system_owner'@'localhost' IDENTIFIED WITH mysql_native_password BY 'cashier_system_owner@2024';
+FLUSH PRIVILEGES;
+
 
 -- CREATE TABLE order_items (
 --     id INT AUTO_INCREMENT PRIMARY KEY,

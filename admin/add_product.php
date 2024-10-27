@@ -57,7 +57,7 @@ if (isset($_POST['add'])) {
     body {
     direction: rtl;
     text-align: right; 
-}
+    }
 
 .container {
     text-align: right; 

@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $employee_password = $_POST['employee_password'];
     $account_status = $_POST['account_status'];
 
-    // تشفير كلمة المرور إذا كان هناك تعديل عليها
+
     $hashed_password = password_hash($employee_password, PASSWORD_DEFAULT);
 
     // استعلام التحديث
